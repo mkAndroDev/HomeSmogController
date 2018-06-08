@@ -1,5 +1,5 @@
-unsigned long myChannelNumber = 276259;
-const char *myWriteAPIKey = "MAJ3ZZ85N3AVG3GA";
+unsigned long myChannelNumber = 0;
+const char *myWriteAPIKey = "XXX";
 
 char ssid[] = "***";
 char pass[] = "***";
@@ -407,7 +407,5 @@ void loop()
 {
   read_DHT();
   sensorSDS();
-  ESP.deepSleep(10000000, WAKE_NO_RFCAL); // Sleep for 10 seconds
-  Serial.print("TICK:\t");
-  Serial.println(millis() / 1000);
+  ESP.deepSleep(60000000, WAKE_NO_RFCAL); // Sleep for 60 seconds
 }
