@@ -1,12 +1,12 @@
 unsigned long myChannelNumber = 0;
-const char *myWriteAPIKey = "XXX";
+const String myWriteAPIKey = "***";
+const char* server = "api.thingspeak.com";
 
 char ssid[] = "***";
 char pass[] = "***";
 
 #define TS_DELAY 60 * 1000
 #include <SoftwareSerial.h>
-//#include <ThingSpeak.h>
 
 #include <ESP8266WiFi.h>
 #include "dht_sensor.h"
@@ -63,7 +63,7 @@ void debug_out(const String &text, int linebreak = 1) {
 }
 
 /*****************************************************************
-  /* start SDS011 sensor                                           *
+  /* start SDS018 sensor                                           *
   /*****************************************************************/
 void start_SDS() {
   const uint8_t start_SDS_cmd[] =
@@ -96,7 +96,7 @@ void set_SDS_duty(uint8_t d) {
   serialSDS.write(cmd, sizeof(cmd));
 }
 /*****************************************************************
-  /* stop SDS011 sensor                                            *
+  /* stop SDS018 sensor                                            *
   /*****************************************************************/
 void stop_SDS() {
   const uint8_t stop_SDS_cmd[] =
@@ -125,7 +125,7 @@ void set_initiative_SDS() {
 }
 
 /*****************************************************************
-  /* read SDS011 sensor values                                     *
+  /* read SDS018 sensor values                                     *
   /*****************************************************************/
 String SDS_version_date() {
   const uint8_t version_SDS_cmd[] = {0xAA, 0xB4, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x05, 0xAB};
@@ -140,7 +140,7 @@ String SDS_version_date() {
   int checksum_ok = 0;
   int position = 0;
 
-  debug_out(F("Start reading SDS011 version date"), 1);
+  debug_out(F("Start reading SDS018 version date"), 1);
 
   start_SDS();
 
@@ -247,10 +247,12 @@ String SDS_version_date() {
     yield();
   }
 
-  debug_out(F("End reading SDS011 version date"), 1);
+  debug_out(F("End reading SDS018 version date"), 1);
 
   return s;
 }
+
+WiFiClient client;
 
 String sensorSDS()
 {
@@ -341,11 +343,34 @@ String sensorSDS()
           debug_out("PM2.5    : " + Float2String(float(pm25_serial) / 10), 1);
           debug_out("temp     : " + Float2String(float(DHT_readings.temp)), 1);
           debug_out("humidity : " + Float2String(float(DHT_readings.hum)), 1);
-          //          ThingSpeak.setField(1, float(pm10_serial) / 10);
-          //          ThingSpeak.setField(2, float(pm25_serial) / 10);
-          //          ThingSpeak.setField(3, DHT_readings.temp);
-          //          ThingSpeak.setField(4, DHT_readings.hum);
-          //          ThingSpeak.writeFields(myChannelNumber, myWriteAPIKey);
+
+          if (client.connect(server, 80)) {
+            Serial.println("Client connected!");
+            String upadteData = "api_key=" + myWriteAPIKey;
+
+            upadteData += "&field1=";
+            upadteData += Float2String(float(pm10_serial) / 10);
+            upadteData += "&field2=";
+            upadteData += Float2String(float(pm25_serial) / 10);
+            upadteData += "&field3=";
+            upadteData += Float2String(float(DHT_readings.temp));
+            upadteData += "&field4=";
+            upadteData += Float2String(float(DHT_readings.hum));
+            upadteData += "\r\n\r\n";
+
+            Serial.println("wywołanie: " + upadteData);
+
+            client.print("GET /update?" + upadteData + "HTTP/1.1");
+            client.print(String(server));
+            client.println("Host: " + String(server));
+            client.println("Connection: close");
+            client.println();
+
+            Serial.println("%. Send to Thingspeak.");
+          } else {
+            Serial.println("Connection failed");
+          }
+          client.stop();
         }
       }
       len = 0;
@@ -360,8 +385,6 @@ String sensorSDS()
   return s;
 }
 
-WiFiClient client;
-
 void clearSerial() {
   while (serialSDS.available()) {
     serialSDS.read();
@@ -370,8 +393,7 @@ void clearSerial() {
 
 void setup()
 {
-  //  analogReference(EXTERNAL);
-  Serial.begin(115200); // Output to Serial at 9600 baud
+  Serial.begin(115200);
   esp_chipid = String(ESP.getChipId());
   Serial.println("esp_chipid: " + esp_chipid);
   WiFi.persistent(false);
@@ -387,7 +409,6 @@ void setup()
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
   int status = WL_IDLE_STATUS;
-  //  ThingSpeak.begin(client);
   serialSDS.begin(9600);
   delay(10);
   debug_out("\nChipId: ", 0);
@@ -401,11 +422,11 @@ void setup()
 
   Serial.println(SDS_version_date());
   set_SDS_duty(0);
+
+  read_DHT();
+  sensorSDS();
+  ESP.deepSleep(5 * 60 * 1000000, WAKE_NO_RFCAL); // Sleep for 5 minutes (1000000 is 1 second)
 }
 
 void loop()
-{
-  read_DHT();
-  sensorSDS();
-  ESP.deepSleep(60000000, WAKE_NO_RFCAL); // Sleep for 60 seconds
-}
+{}
