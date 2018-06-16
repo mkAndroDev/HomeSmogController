@@ -1,9 +1,9 @@
-unsigned long myChannelNumber = 0;
-const String myWriteAPIKey = "***";
+unsigned long myChannelNumber = 0; //your_thingspeak_channel_number
+const String myWriteAPIKey = "***"; //your_thigspeak_API_key
 const char* server = "api.thingspeak.com";
 
-char ssid[] = "***";
-char pass[] = "***";
+char ssid[] = "***"; //your_wifi_name
+char pass[] = "***"; //your_wifi_password
 
 #define TS_DELAY 60 * 1000
 #include <SoftwareSerial.h>
@@ -18,6 +18,8 @@ bool is_SDS_running = true;
 #define SDS_PIN_TX D2
 
 SoftwareSerial serialSDS(SDS_PIN_RX, SDS_PIN_TX, false, 1024);
+
+int RELAY_PIN = 10;
 
 unsigned long lastwrite = 0;
 
@@ -267,7 +269,6 @@ String sensorSDS()
   int checksum_ok = 0;
   int position = 0;
 
-
   while (serialSDS.available() > 0)
   {
     buffer = serialSDS.read();
@@ -393,6 +394,8 @@ void clearSerial() {
 
 void setup()
 {
+  pinMode(RELAY_PIN, OUTPUT);
+  digitalWrite(RELAY_PIN, LOW);
   Serial.begin(115200);
   esp_chipid = String(ESP.getChipId());
   Serial.println("esp_chipid: " + esp_chipid);
@@ -425,7 +428,8 @@ void setup()
 
   read_DHT();
   sensorSDS();
-  ESP.deepSleep(5 * 60 * 1000000, WAKE_NO_RFCAL); // Sleep for 5 minutes (1000000 is 1 second)
+  digitalWrite(RELAY_PIN, HIGH);
+  ESP.deepSleep(20 * 60 *1000000, WAKE_NO_RFCAL); // Sleep for 5 minutes (1000000 is 1 second)
 }
 
 void loop()
