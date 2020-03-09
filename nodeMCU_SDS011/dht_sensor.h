@@ -1,6 +1,6 @@
 #include "DHT.h"
 
-#define DHTPIN D3
+#define DHTPIN D2
 #define DHTTYPE DHT22
 
 DHT dht(DHTPIN, DHTTYPE);
@@ -9,8 +9,6 @@ struct DHT_data {
   float temp;
   float hum;
 } DHT_readings;
-
-float dht_temp;
 
 void setup_dht() {
   Serial.println("DHT22 test!");

@@ -1,21 +1,22 @@
-unsigned long myChannelNumber = 0; //your_thingspeak_channel_number
-const String myWriteAPIKey = "***"; //your_thigspeak_API_key
+unsigned long myChannelNumber = 515124; //your_thingspeak_channel_number
+const String myWriteAPIKey = "YR1EDP9L2CXQIK1Q"; //your_thigspeak_API_key
 const char* server = "api.thingspeak.com";
 
-char ssid[] = "***"; //your_wifi_name
-char pass[] = "***"; //your_wifi_password
+char ssid[] = "DREAMIT"; //your_wifi_name
+char pass[] = "Zgadnij3006saM"; //your_wifi_password
 
 #define TS_DELAY 60 * 1000
 #include <SoftwareSerial.h>
 
 #include <ESP8266WiFi.h>
 #include "dht_sensor.h"
+#include "bme_sensor.h"
 #include <SoftwareSerial.h>
 
 bool is_SDS_running = true;
 
-#define SDS_PIN_RX D1
-#define SDS_PIN_TX D2
+#define SDS_PIN_RX D3
+#define SDS_PIN_TX D4
 
 SoftwareSerial serialSDS(SDS_PIN_RX, SDS_PIN_TX, false, 1024);
 
@@ -342,8 +343,10 @@ String sensorSDS()
 
           debug_out("PM10     : " + Float2String(float(pm10_serial) / 10), 1);
           debug_out("PM2.5    : " + Float2String(float(pm25_serial) / 10), 1);
-          debug_out("temp     : " + Float2String(float(DHT_readings.temp)), 1);
-          debug_out("humidity : " + Float2String(float(DHT_readings.hum)), 1);
+          debug_out("temp     : " + Float2String(float(bmeData.temperature)), 1);
+          debug_out("humidity : " + Float2String(float(bmeData.humidity)), 1);
+          debug_out("pressure : " + Float2String(float(bmeData.pressure)), 1);
+          debug_out("altitude : " + Float2String(float(bmeData.altitude)), 1);
 
           if (client.connect(server, 80)) {
             Serial.println("Client connected!");
@@ -354,9 +357,13 @@ String sensorSDS()
             upadteData += "&field2=";
             upadteData += Float2String(float(pm25_serial) / 10);
             upadteData += "&field3=";
-            upadteData += Float2String(float(DHT_readings.temp));
+            upadteData += Float2String(float(bmeData.temperature));
             upadteData += "&field4=";
-            upadteData += Float2String(float(DHT_readings.hum));
+            upadteData += Float2String(float(bmeData.humidity));
+            upadteData += "&field5=";
+            upadteData += Float2String(float(bmeData.pressure));
+            upadteData += "&field6=";
+            upadteData += Float2String(float(bmeData.altitude));
             upadteData += "\r\n\r\n";
 
             Serial.println("wywołanie: " + upadteData);
@@ -417,7 +424,8 @@ void setup()
   debug_out("\nChipId: ", 0);
   debug_out(esp_chipid, 1);
 
-  setup_dht();
+//  setup_dht();
+  setupBme();
   delay(2000);
   // sometimes parallel sending data and web page will stop nodemcu, watchdogtimer set to 30 seconds
   wdt_disable();
@@ -426,7 +434,8 @@ void setup()
   Serial.println(SDS_version_date());
   set_SDS_duty(0);
 
-  read_DHT();
+//  read_DHT();
+  readBme();
   sensorSDS();
   digitalWrite(RELAY_PIN, HIGH);
   ESP.deepSleep(20 * 60 *1000000, WAKE_NO_RFCAL); // Sleep for 5 minutes (1000000 is 1 second)
