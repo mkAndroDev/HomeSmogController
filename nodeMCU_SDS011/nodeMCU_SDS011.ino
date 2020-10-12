@@ -1,9 +1,9 @@
-unsigned long myChannelNumber = 515124; //your_thingspeak_channel_number
-const String myWriteAPIKey = "YR1EDP9L2CXQIK1Q"; //your_thigspeak_API_key
+unsigned long myChannelNumber = ***; //your_thingspeak_channel_number
+const String myWriteAPIKey = "***"; //your_thigspeak_API_key
 const char* server = "api.thingspeak.com";
 
-char ssid[] = "DREAMIT"; //your_wifi_name
-char pass[] = "Zgadnij3006saM"; //your_wifi_password
+char ssid[] = "***"; //your_wifi_name
+char pass[] = "***"; //your_wifi_password
 
 #define TS_DELAY 60 * 1000
 #include <SoftwareSerial.h>
